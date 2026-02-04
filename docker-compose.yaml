@@ -18,7 +18,7 @@ services:
     build: ./api
     container_name: backend-api
     environment:
-      DB_HOST: mysql
+      DB_HOST: localhost
       DB_USER: root
       DB_PASSWORD: nrjydv1997
       JWT_SECRET: devopsShackSuperSecretKey
