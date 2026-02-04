@@ -1,20 +1,22 @@
-FROM node:22-alpine AS builder
+# ---------- Stage 1: Build React app ----------
+FROM node:20-alpine AS builder   # ✅ use LTS
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm install
+# ✅ deterministic + install dev deps
+RUN npm ci --include=dev
 
 COPY . .
 
 RUN npm run build
 
 
+# ---------- Stage 2: Nginx serve ----------
 FROM nginx:alpine
 
 COPY --from=builder /app/build /usr/share/nginx/html
-
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
