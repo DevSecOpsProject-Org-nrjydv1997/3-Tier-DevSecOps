@@ -104,11 +104,37 @@ pipeline {
         stage('Docker Deploy via compose') {
             steps {
                 script {
-                    sh 'docker compose up -d'
+                    echo "docker compose up -d 'running'"
+                    //sh 'docker compose up -d'
                 }
             }
         }
         
+        stage('k8s-deploy') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: '', clusterName: 'dev-my-cluster', contextName: '', credentialsId: 'k8s-token', namespace: 'dev', restrictKubeConfigAccess: false, serverUrl: 'https://564544282C4698B4B626EF98CF85ADAE.gr7.ap-south-1.eks.amazonaws.com') {
+                       sh 'kubectl apply -f k8s/sc.yaml -n dev'
+                       sh 'kubectl apply -f k8s/mysql.yaml -n dev'
+                       sh 'kubectl apply -f k8s/backend.yaml -n dev'
+                       sh 'kubectl apply -f k8s/frontend.yaml -n dev'
+                       sleep 30
+                    }
+                }
+            }
+        }
+        
+        
+        stage('-verify-k8s-deploy') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: '', clusterName: 'dev-my-cluster', contextName: '', credentialsId: 'k8s-token', namespace: 'dev', restrictKubeConfigAccess: false, serverUrl: 'https://564544282C4698B4B626EF98CF85ADAE.gr7.ap-south-1.eks.amazonaws.com') {
+                       sh 'kubectl get pods -n dev'
+                       sh 'kubectl get svc -n dev'
+                    }
+                }
+            }
+        }
         
     }
 }
