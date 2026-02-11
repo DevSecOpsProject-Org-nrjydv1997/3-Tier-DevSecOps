@@ -31,8 +31,12 @@ spec:
   selector:
     matchLabels:
       app: backend
-  spec:
-    containers:
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
       - name: backend
         image: nrjydv1997/threetierdevsecopsbackend:latest
         ports:
