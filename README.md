@@ -18,6 +18,39 @@ This project implements a DevSecOps pipeline that:
 * Deploys a 3-tier application to Kubernetes
 * Configures ingress with TLS using cert-manager
 * Exposes application using a custom domain
+* Sends CI/CD notifications to Slack
+
+---
+
+## - CI/CD Pipeline Diagram
+flowchart TD
+
+A[Developer Push Code] --> B[GitHub Repository]
+B --> C[Webhook Trigger]
+C --> D[Jenkins Pipeline]
+
+D --> E[Client Compilation Check]
+D --> F[API Compilation Check]
+
+F --> G[Gitleaks Secret Scan]
+G --> H[SonarQube Analysis]
+H --> I[Quality Gate]
+
+I --> J[Trivy Filesystem Scan]
+
+J --> K[Build Backend Image]
+K --> L[Trivy Image Scan Backend]
+L --> M[Push Backend Image]
+
+M --> N[Build Frontend Image]
+N --> O[Trivy Image Scan Frontend]
+O --> P[Push Frontend Image]
+
+P --> Q[Kubernetes Deployment]
+Q --> R[Ingress + TLS]
+R --> S[Live Application]
+
+S --> T[Slack Notification]
 
 ---
 
@@ -258,9 +291,46 @@ Triggers pipeline on push to `dev` branch.
 
 ---
 
+## Step 21 - Slack Integration
+
+Slack notifications were integrated with Jenkins pipeline.
+
+Steps performed:
+
+Created Slack workspace and channel (example: #cicd-alerts)
+
+Created Slack App from https://api.slack.com/apps
+
+Enabled Incoming Webhooks
+
+Generated webhook URL
+
+Installed Slack Notification plugin in Jenkins
+
+Added webhook URL as Jenkins credential (Secret Text)
+
+Configured Slack in Jenkins system configuration
+
+Added Slack notification block in Jenkins pipeline
+
+Example pipeline notification:
+
+post {
+  success {
+    slackSend channel: '#cicd-alerts',
+              message: "SUCCESS: ${env.JOB_NAME} build ${env.BUILD_NUMBER}"
+  }
+  failure {
+    slackSend channel: '#cicd-alerts',
+              message: "FAILED: ${env.JOB_NAME} build ${env.BUILD_NUMBER}"
+  }
+}
+
+---
+
 # Kubernetes Deployment
 
-## Step 21 — Kubernetes Manifests
+## Step 22 — Kubernetes Manifests
 
 Includes:
 
@@ -273,7 +343,7 @@ Includes:
 
 ---
 
-## Step 22 — Jenkins Pipeline Responsibilities
+## Step 23 — Jenkins Pipeline Responsibilities
 
 Pipeline performs:
 
@@ -284,12 +354,13 @@ Pipeline performs:
 * Docker build & push
 * Kubernetes deployment
 * Deployment verification
+* Slack notification
 
 ---
 
 # Domain + TLS
 
-## Step 23 — TLS Configuration
+## Step 24 — TLS Configuration
 
 Domain:
 
