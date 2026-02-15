@@ -202,6 +202,8 @@ docker run -d -p 9000:9000 sonarqube:lts-community
 * Kubernetes CLI
 * Kubernetes Credentials
 * Generic Webhook Trigger
+* Slack Notification
+  
 
 ---
 
