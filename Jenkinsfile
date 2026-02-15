@@ -7,6 +7,8 @@ pipeline {
 
     environment{
         SCANNER_HOME = tool 'sonar-scanner'
+        PROJECT_NAME = 'CICD_3tier_app'
+        ENVIRONMENT = '🚀 Production'
     }
 
     stages {
@@ -134,6 +136,75 @@ pipeline {
                     }
                 }
             }
+        }
+
+        post {
+        success {
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                script {
+                    def message = """{
+                        "text": "*✅ ${PROJECT_NAME} Build Successful!*",
+                        "attachments": [
+                            {
+                                "color": "#36a64f",
+                                "fields": [
+                                    { "title": "Job", "value": "${env.JOB_NAME}", "short": true },
+                                    { "title": "Build", "value": "#${env.BUILD_NUMBER}", "short": true },
+                                    { "title": "Environment", "value": "${ENVIRONMENT}", "short": true }
+                                ],
+                                "footer": "Jenkins CI",
+                                "footer_icon": "https://www.jenkins.io/images/logos/jenkins/jenkins.png",
+                                "ts": ${System.currentTimeMillis() / 1000},
+                                "actions": [
+                                    {
+                                        "type": "button",
+                                        "text": "View Build",
+                                        "url": "${env.BUILD_URL}",
+                                        "style": "primary"
+                                    }
+                                ]
+                            }
+                        ]
+                    }"""
+                    sh """curl -X POST -H 'Content-type: application/json' --data '${message}' $SLACK_URL"""
+                }
+            }
+        }
+
+        failure {
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                script {
+                    def message = """{
+                        "text": "<!here> *❌ ${PROJECT_NAME} Build Failed!*",
+                        "attachments": [
+                            {
+                                "color": "#FF0000",
+                                "fields": [
+                                    { "title": "Job", "value": "${env.JOB_NAME}", "short": true },
+                                    { "title": "Build", "value": "#${env.BUILD_NUMBER}", "short": true },
+                                    { "title": "Environment", "value": "${ENVIRONMENT}", "short": true }
+                                ],
+                                "footer": "Jenkins CI",
+                                "footer_icon": "https://www.jenkins.io/images/logos/jenkins/jenkins.png",
+                                "ts": ${System.currentTimeMillis() / 1000},
+                                "actions": [
+                                    {
+                                        "type": "button",
+                                        "text": "View Build Logs",
+                                        "url": "${env.BUILD_URL}",
+                                        "style": "danger"
+                                    }
+                                ]
+                            }
+                        ]
+                    }"""
+                    sh """curl -X POST -H 'Content-type: application/json' --data '${message}' $SLACK_URL"""
+                }
+            }
+        }
+
+        always {
+            echo "🎯 Post-build notification sent"
         }
         
     }
